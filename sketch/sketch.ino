@@ -13,41 +13,78 @@
 // Command definitions.
 // ------------------------------------------------------------------------------------------------
 
-// Maximum command payload size.
-#define MAX_PAYLOAD_SIZE 1
+#define MAGIC 0x55
 
+// No operation.
+#define COMMAND_NOOP 'N'
 // Full stop.
-#define COMMAND_STOP 0
+#define COMMAND_STOP 'S'
 // Go. Read direction and power.
-#define COMMAND_GO   1
+#define COMMAND_GO   'G'
+
+#define DIRECTION_FORWARDS  0
+#define DIRECTION_BACKWARDS 1
 
 // Globals.
 // ------------------------------------------------------------------------------------------------
 
 // Bluetooth module: RX, TX.
-SoftwareSerial bluetooth(12, 13);
+SoftwareSerial bluetooth(7, 8);
+
+// Debug indicator.
+#define DEBUG_PIN 13
 
 // Main loop.
 // ------------------------------------------------------------------------------------------------
 
-void receive_command() {
-    // TODO.
+char receive_command() {
+    char command = bluetooth.read();
+    switch (command) {
+
+        case COMMAND_NOOP:
+            break;
+
+        default:
+            return 0;
+    }
+    return 1;
+}
+
+long read_vcc() {
+    long vcc;
+
+    ADMUX = _BV(REFS0) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1);
+    delay(1);
+    ADCSRA |= _BV(ADSC);
+    while (bit_is_set(ADCSRA, ADSC));
+    vcc = ADCL;
+    vcc |= ADCH << 8;
+    vcc = 1126400L / vcc;
+
+    return vcc;
 }
 
 void send_telemetry() {
-    // TODO.
+    digitalWrite(DEBUG_PIN, HIGH);
+    
+    bluetooth.write(MAGIC);
+
+    long vcc = read_vcc();
+    bluetooth.write((char*)&vcc, sizeof(vcc));
+
+    digitalWrite(DEBUG_PIN, LOW);
 }
 
 // Entry point.
 // ------------------------------------------------------------------------------------------------
 
 void setup() {
+    pinMode(DEBUG_PIN, OUTPUT);
     bluetooth.begin(9600);
 }
 
 void loop() {
-    digitalWrite(13, HIGH);   // turn the LED on (HIGH is the voltage level)
-    delay(1000);              // wait for a second
-    digitalWrite(13, LOW);    // turn the LED off by making the voltage LOW
-    delay(1000);              // wait for a second
+    if (receive_command()) {
+        send_telemetry();
+    }
 }
