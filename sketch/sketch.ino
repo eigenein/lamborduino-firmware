@@ -13,44 +13,38 @@
 // Command definitions.
 // ------------------------------------------------------------------------------------------------
 
-#define MAGIC 0x55
+const unsigned int BYTE_ORDER_MARK = 0xFEFF;
 
-// No operation.
-#define COMMAND_NOOP 'N'
-// Full stop.
-#define COMMAND_STOP 'S'
-// Go. Read direction and power.
-#define COMMAND_GO   'G'
+#define COMMAND_NOOP    0x01
+#define COMMAND_STOP    0x02
+#define COMMAND_GO      0x03
 
-#define DIRECTION_FORWARDS  0
-#define DIRECTION_BACKWARDS 1
+#define DIRECTION_FORWARDS      0x01
+#define DIRECTION_BACKWARDS     0x02
 
-// Globals.
+// Pins.
 // ------------------------------------------------------------------------------------------------
 
-// Bluetooth module: RX, TX.
-SoftwareSerial bluetooth(7, 8);
+#define INDICATOR_PIN   13
 
-// Debug indicator.
-#define DEBUG_PIN 13
+SoftwareSerial bluetooth(/* RX */ 7, /* TX */ 8);
 
 // Main loop.
 // ------------------------------------------------------------------------------------------------
 
-char receive_command() {
-    char command = bluetooth.read();
-    switch (command) {
+bool receiveCommand() {
+    switch (bluetooth.read()) {
 
         case COMMAND_NOOP:
             break;
 
         default:
-            return 0;
+            return false;
     }
-    return 1;
+    return true;
 }
 
-long read_vcc() {
+long readVcc() {
     long vcc;
 
     ADMUX = _BV(REFS0) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1);
@@ -64,27 +58,24 @@ long read_vcc() {
     return vcc;
 }
 
-void send_telemetry() {
-    digitalWrite(DEBUG_PIN, HIGH);
-    
-    bluetooth.write(MAGIC);
-
-    long vcc = read_vcc();
+void sendTelemetry() {
+    digitalWrite(INDICATOR_PIN, HIGH);
+    bluetooth.write((char*)&BYTE_ORDER_MARK, sizeof(BYTE_ORDER_MARK));
+    long vcc = readVcc();
     bluetooth.write((char*)&vcc, sizeof(vcc));
-
-    digitalWrite(DEBUG_PIN, LOW);
+    digitalWrite(INDICATOR_PIN, LOW);
 }
 
 // Entry point.
 // ------------------------------------------------------------------------------------------------
 
 void setup() {
-    pinMode(DEBUG_PIN, OUTPUT);
+    pinMode(INDICATOR_PIN, OUTPUT);
     bluetooth.begin(9600);
 }
 
 void loop() {
-    if (receive_command()) {
-        send_telemetry();
+    if (receiveCommand()) {
+        sendTelemetry();
     }
 }
