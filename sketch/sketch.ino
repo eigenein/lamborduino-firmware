@@ -17,7 +17,7 @@ const unsigned int BYTE_ORDER_MARK = 0xFEFF;
 
 #define COMMAND_NOOP    0x01
 #define COMMAND_STOP    0x02
-#define COMMAND_GO      0x03
+#define COMMAND_MOVE    0x03
 
 #define DIRECTION_FORWARDS      0x01
 #define DIRECTION_BACKWARDS     0x02
@@ -36,6 +36,14 @@ bool receiveCommand() {
     switch (bluetooth.read()) {
 
         case COMMAND_NOOP:
+            break;
+
+        case COMMAND_MOVE:
+            // TODO.
+            break;
+
+        case COMMAND_STOP:
+            // TODO.
             break;
 
         default:
