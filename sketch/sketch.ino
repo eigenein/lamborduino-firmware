@@ -19,31 +19,53 @@ const unsigned int BYTE_ORDER_MARK = 0xFEFF;
 #define COMMAND_STOP    0x02
 #define COMMAND_MOVE    0x03
 
-#define DIRECTION_FORWARDS      0x01
-#define DIRECTION_BACKWARDS     0x02
+#define SPEED_FULL      255
+#define SPEED_INVERSE   1
 
 // Pins.
 // -------------------------------------------------------------------------------------------------
 
-#define INDICATOR_PIN   13
+#define PIN_RX           7
+#define PIN_TX           8
+#define PIN_AHEAD_SPEED  10
+#define PIN_AHEAD_1      11
+#define PIN_AHEAD_2      12
+#define PIN_INDICATOR    13
 
-SoftwareSerial bluetooth(/* RX */ 7, /* TX */ 8);
+SoftwareSerial bluetooth(PIN_RX, PIN_TX);
 
 // Main loop.
 // -------------------------------------------------------------------------------------------------
 
+int blockingRead() {
+    while (!bluetooth.available());
+    return bluetooth.read();
+}
+
+void stop() {
+    digitalWrite(PIN_AHEAD_1, LOW);
+    digitalWrite(PIN_AHEAD_2, LOW);
+    analogWrite(PIN_AHEAD_SPEED, SPEED_FULL);
+}
+
 bool receiveCommand() {
-    switch (bluetooth.read()) {
+    switch (blockingRead()) {
 
         case COMMAND_NOOP:
             break;
 
         case COMMAND_MOVE:
-            // TODO.
+            {
+                int speed = blockingRead();
+                int inverse = blockingRead();
+                analogWrite(PIN_AHEAD_SPEED, speed);
+                digitalWrite(PIN_AHEAD_1, inverse == SPEED_INVERSE ? HIGH : LOW);
+                digitalWrite(PIN_AHEAD_2, inverse == SPEED_INVERSE ? LOW : HIGH);
+            }
             break;
 
         case COMMAND_STOP:
-            // TODO.
+            stop();
             break;
 
         default:
@@ -67,18 +89,22 @@ long readVcc() {
 }
 
 void sendTelemetry() {
-    digitalWrite(INDICATOR_PIN, HIGH);
+    digitalWrite(PIN_INDICATOR, HIGH);
     bluetooth.write((char*)&BYTE_ORDER_MARK, sizeof(BYTE_ORDER_MARK));
     long vcc = readVcc();
     bluetooth.write((char*)&vcc, sizeof(vcc));
-    digitalWrite(INDICATOR_PIN, LOW);
+    digitalWrite(PIN_INDICATOR, LOW);
 }
 
 // Entry point.
 // -------------------------------------------------------------------------------------------------
 
 void setup() {
-    pinMode(INDICATOR_PIN, OUTPUT);
+    pinMode(PIN_AHEAD_SPEED, OUTPUT);
+    pinMode(PIN_AHEAD_1, OUTPUT);
+    pinMode(PIN_AHEAD_2, OUTPUT);
+    pinMode(PIN_INDICATOR, OUTPUT);
+    stop();
     bluetooth.begin(9600);
 }
 
