@@ -25,11 +25,14 @@ const unsigned int BYTE_ORDER_MARK = 0xFEFF;
 // Pins.
 // -------------------------------------------------------------------------------------------------
 
+#define PIN_RIGHT_1      2
+#define PIN_RIGHT_SPEED  3
+#define PIN_RIGHT_2      4
 #define PIN_RX           7
 #define PIN_TX           8
-#define PIN_AHEAD_SPEED  10
-#define PIN_AHEAD_1      11
-#define PIN_AHEAD_2      12
+#define PIN_LEFT_SPEED   10
+#define PIN_LEFT_1       11
+#define PIN_LEFT_2       12
 #define PIN_INDICATOR    13
 
 SoftwareSerial bluetooth(PIN_RX, PIN_TX);
@@ -43,9 +46,14 @@ int blockingRead() {
 }
 
 void stop() {
-    digitalWrite(PIN_AHEAD_1, LOW);
-    digitalWrite(PIN_AHEAD_2, LOW);
-    analogWrite(PIN_AHEAD_SPEED, SPEED_FULL);
+    // Block left wheel.
+    digitalWrite(PIN_LEFT_1, LOW);
+    digitalWrite(PIN_LEFT_2, LOW);
+    analogWrite(PIN_LEFT_SPEED, SPEED_FULL);
+    // Block right wheel.
+    digitalWrite(PIN_RIGHT_1, LOW);
+    digitalWrite(PIN_RIGHT_2, LOW);
+    analogWrite(PIN_RIGHT_SPEED, SPEED_FULL);
 }
 
 bool receiveCommand() {
@@ -56,11 +64,18 @@ bool receiveCommand() {
 
         case COMMAND_MOVE:
             {
-                int speed = blockingRead();
-                int inverse = blockingRead();
-                analogWrite(PIN_AHEAD_SPEED, speed);
-                digitalWrite(PIN_AHEAD_1, inverse == SPEED_INVERSE ? HIGH : LOW);
-                digitalWrite(PIN_AHEAD_2, inverse == SPEED_INVERSE ? LOW : HIGH);
+                int leftSpeed = blockingRead();
+                int leftInverse = blockingRead();
+                int rightSpeed = blockingRead();
+                int rightInverse = blockingRead();
+                // Left wheel.
+                analogWrite(PIN_LEFT_SPEED, leftSpeed);
+                digitalWrite(PIN_LEFT_1, leftInverse == SPEED_INVERSE ? HIGH : LOW);
+                digitalWrite(PIN_LEFT_2, leftInverse == SPEED_INVERSE ? LOW : HIGH);
+                // Right wheel.
+                analogWrite(PIN_RIGHT_SPEED, rightSpeed);
+                digitalWrite(PIN_RIGHT_1, rightInverse == SPEED_INVERSE ? HIGH : LOW);
+                digitalWrite(PIN_RIGHT_2, rightInverse == SPEED_INVERSE ? LOW : HIGH);
             }
             break;
 
@@ -100,10 +115,16 @@ void sendTelemetry() {
 // -------------------------------------------------------------------------------------------------
 
 void setup() {
-    pinMode(PIN_AHEAD_SPEED, OUTPUT);
-    pinMode(PIN_AHEAD_1, OUTPUT);
-    pinMode(PIN_AHEAD_2, OUTPUT);
+    pinMode(PIN_LEFT_SPEED, OUTPUT);
+    pinMode(PIN_LEFT_1, OUTPUT);
+    pinMode(PIN_LEFT_2, OUTPUT);
+
+    pinMode(PIN_RIGHT_SPEED, OUTPUT);
+    pinMode(PIN_RIGHT_1, OUTPUT);
+    pinMode(PIN_RIGHT_2, OUTPUT);
+    
     pinMode(PIN_INDICATOR, OUTPUT);
+
     stop();
     bluetooth.begin(9600);
 }
