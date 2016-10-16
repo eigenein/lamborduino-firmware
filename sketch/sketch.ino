@@ -31,8 +31,8 @@ const unsigned int BYTE_ORDER_MARK = 0xFEFF;
 #define PIN_RX           7
 #define PIN_TX           8
 #define PIN_LEFT_SPEED   10
-#define PIN_LEFT_1       11
-#define PIN_LEFT_2       12
+#define PIN_LEFT_1       5
+#define PIN_LEFT_2       6
 #define PIN_INDICATOR    13
 
 SoftwareSerial bluetooth(PIN_RX, PIN_TX);
