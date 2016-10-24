@@ -5,11 +5,6 @@
 #error "ATmega328 only is supported at the moment."
 #endif
 
-// Includes.
-// -------------------------------------------------------------------------------------------------
-
-#include <SoftwareSerial.h>
-
 // Command definitions.
 // -------------------------------------------------------------------------------------------------
 
@@ -28,21 +23,17 @@ const unsigned int BYTE_ORDER_MARK = 0xFEFF;
 #define PIN_RIGHT_1      2
 #define PIN_RIGHT_SPEED  3
 #define PIN_RIGHT_2      4
-#define PIN_RX           7
-#define PIN_TX           8
 #define PIN_LEFT_SPEED   10
 #define PIN_LEFT_1       5
 #define PIN_LEFT_2       6
 #define PIN_INDICATOR    13
 
-SoftwareSerial bluetooth(PIN_RX, PIN_TX);
-
 // Main loop.
 // -------------------------------------------------------------------------------------------------
 
 int blockingRead() {
-    while (!bluetooth.available());
-    return bluetooth.read();
+    while (!Serial.available());
+    return Serial.read();
 }
 
 void stop() {
@@ -105,9 +96,9 @@ long readVcc() {
 
 void sendTelemetry() {
     digitalWrite(PIN_INDICATOR, HIGH);
-    bluetooth.write((char*)&BYTE_ORDER_MARK, sizeof(BYTE_ORDER_MARK));
+    Serial.write((char*)&BYTE_ORDER_MARK, sizeof(BYTE_ORDER_MARK));
     long vcc = readVcc();
-    bluetooth.write((char*)&vcc, sizeof(vcc));
+    Serial.write((char*)&vcc, sizeof(vcc));
     digitalWrite(PIN_INDICATOR, LOW);
 }
 
@@ -126,7 +117,7 @@ void setup() {
     pinMode(PIN_INDICATOR, OUTPUT);
 
     stop();
-    bluetooth.begin(9600);
+    Serial.begin(9600);
 }
 
 void loop() {
