@@ -1,1 +1,1 @@
-Please find the Android software here: https://github.com/eigenein/lamborduino-android/tree/master.
+Deprecated: see https://github.com/eigenein/rc-car.
